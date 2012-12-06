@@ -13,9 +13,12 @@ from w3lib.html import remove_tags_with_content, remove_tags, remove_comments
 words = re.compile('[\w_-]+')
 tokenize = lambda text: words.findall(text)
 
-SCIFI_KEYWORDS = ['assimov', 'bradbury', 'future', 'science', 'fiction', 
+RELEVANCY_TSHOLD = 2
+SCIFI_KEYWORDS = set(['assimov', 'bradbury', 'future', 'science', 'fiction',
     'scifi', 'sci-fi', 'space', 'travel', 'alien', 'time', 'cyberpunk'
-    'stephenson', 'gibson']
+    'stephenson', 'gibson'])
+
+is_relevant = lambda toks: len(SCIFI_KEYWORDS & set(toks)) <= RELEVANCY_TSHOLD
 
 class ScificrawlerSpider(CrawlSpider):
     name = 'scificrawler'
@@ -24,25 +27,18 @@ class ScificrawlerSpider(CrawlSpider):
     rules = (
         Rule(SgmlLinkExtractor(), callback='parse_item', follow=True),
     )
-    page_count = 0
 
     def parse_item(self, response):
-        self.page_count += 1
-        if self.page_count > settings.MAX_PAGES:
-            raise CloseSpider('max num of pages reached')
         item = ScifibotItem()
         # clean body
         orig_body = response.body_as_unicode()
         body = remove_tags_with_content(orig_body,
             which_ones=('script', 'head'))
-        body = remove_comments(body)
-        body = remove_tags(body).lower()
-        tokens = tokenize(body)
-
+        body = remove_tags(remove_comments(body))
+        tokens = tokenize(body.lower())
         # decide if the page is interesting
-        if len(set(SCIFI_KEYWORDS) & set(tokens)) <= 2:
-            stats.inc_value('scifi/filtered_out')
-            # probably not a sci fi page
+        if not is_relevant(tokens):
+            stats.inc_value('scifi/filtered_out') # probably not scifi page
             return
 
         item['keywords'] = tokens

@@ -14,8 +14,6 @@ NEWSPIDER_MODULE = 'scifibot.spiders'
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 USER_AGENT = 'scifibot (university assignment)'
 
-MAX_PAGES = 10
-
 SCHEDULER = 'scifibot.randomscheduler.RandomScheduler'
 
 SPIDER_MIDDLEWARES = {
@@ -25,3 +23,9 @@ SPIDER_MIDDLEWARES = {
 DOWNLOADER_MIDDLEWARES = {
     'scifibot.middleware.DuplicateDetection': 600,
 }
+
+EXTENSIONS = {
+    'scrapy.contrib.closespider.CloseSpider': 600,
+}
+
+CLOSESPIDER_PAGECOUNT = 20
