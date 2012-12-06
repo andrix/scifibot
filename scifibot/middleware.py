@@ -4,12 +4,15 @@ from scrapy.exceptions import IgnoreRequest
 fingerprint = lambda text: sha1(text).hexdigest()
 
 class DuplicateDetection(object):
-
+    """
+    Simple duplicate detection middleware
+    """
     seenpages = set()
 
     def process_response(self, request, response, spider):
         fp = fingerprint(response.body)
-        if fp in self.seenpages:
-            raise IgnoreRequest
-        return response
+        if fp not in self.seenpages:
+            self.seenpages.add(fp)
+            return response
+        raise IgnoreRequest
 
